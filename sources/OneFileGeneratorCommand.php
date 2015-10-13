@@ -1,14 +1,21 @@
 <?php
 
-namespace LaravelPlus\Generators;
+namespace Jumilla\Generators\Laravel;
 
 use Jumilla\Generators\FileGenerator;
 
 abstract class OneFileGeneratorCommand extends GeneratorCommand
 {
-    protected function generate(FileGenerator $generator, $classname)
+    /**
+     * Generate files.
+     *
+     * @return bool
+     */
+    protected function generate(FileGenerator $generator)
     {
-        $path = $this->filterPath($this->getRelativePath($classname));
+        $fqcn = $this->convertToFullQualifyClassName($this->getNameInput());
+
+        $path = $this->getRelativePath($fqcn).'.php';
 
         if ($generator->exists($path)) {
             $this->error($this->type.' already exists!');
@@ -16,19 +23,27 @@ abstract class OneFileGeneratorCommand extends GeneratorCommand
             return false;
         }
 
-        return $this->generateFile($generator, $path);
+        return $this->generateFile($generator, $path, $fqcn);
     }
 
-    protected function filterPath($path)
+    /**
+     * Get the desired class name from the input.
+     *
+     * @return string
+     */
+    protected function getNameInput()
     {
-        $parts = explode('/', $path);
-
-        foreach ($parts as &$part) {
-            $part = ucfirst(came_case($part));
-        }
-
-        return implode('/', $path);
+        return $this->argument('name');
     }
 
-    abstract protected function generateFile(FileGenerator $generator, $path);
+    /**
+     * Generate one file.
+     *
+     * @param FileGenerator $generator
+     * @param string $path
+     * @param string $fqcn
+     *
+     * @return bool
+     */
+    abstract protected function generateFile(FileGenerator $generator, $path, $fqcn);
 }

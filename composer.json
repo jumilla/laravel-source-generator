@@ -1,5 +1,5 @@
 {
-	"name": "laravel-plus/source-generator",
+	"name": "jumilla/laravel-source-generator",
 	"type": "library",
 	"description": "PHP source code generator. Can be written using a method chain.",
 	"license": "MIT",
@@ -23,7 +23,7 @@
     },
 	"autoload": {
 		"psr-4": {
-			"LaravelPlus\\Generators": "sources/"
+			"Jumilla\\Generators\\Laravel\\": "sources/"
 		}
 	},
 	"minimum-stability": "stable",

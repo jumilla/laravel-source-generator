@@ -1,6 +1,6 @@
 <?php
 
-namespace LaravelPlus\Generators;
+namespace Jumilla\Generators\Laravel;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
@@ -8,8 +8,6 @@ use Jumilla\Generators\FileGenerator;
 
 abstract class GeneratorCommand extends Command
 {
-    protected $stub_directory_path;
-
     /**
      * The type of class being generated.
      *
@@ -17,56 +15,41 @@ abstract class GeneratorCommand extends Command
      */
     protected $type;
 
-    public function getOutputDirectory()
-    {
-        return '.';
-    }
+    /**
+     * The stub directory path.
+     *
+     * @var string
+     */
+    protected $stub_directory;
 
-    public function getStubDirectory()
+    /**
+     * The constructor.
+     */
+    public function __construct()
     {
-        return $this->stub_directory_path;
-    }
+        parent::__construct();
 
-    public function setStubDirectory($path)
-    {
-        $this->stub_directory_path = $path;
+        $this->stub_directory = __DIR__.'/stubs';
     }
 
     /**
-     * Get the desired class name from the input.
+     * Get the stub directory path.
      *
      * @return string
      */
-    protected function getNameInput()
+    public function getStubDirectory()
     {
-        return $this->argument('name');
+        return $this->stub_directory;
     }
 
     /**
-     * Get the root namespace.
+     * Set the stub directory path.
      *
-     * @return $string
+     * @param string $path
      */
-    public function getRootNamespace()
+    public function setStubDirectory($path)
     {
-        return trim($this->laravel->getNamespace(), '\\');
-    }
-
-    /**
-     * Get the default namespace for the class.
-     *
-     * @return $string
-     */
-    public function getDefaultNamespace()
-    {
-        return $this->getRootNamespace();
-    }
-
-    public function getRelativePath($classname)
-    {
-        $relative = substr($classname, strlen($this->getNamespace()) + 1);
-
-        return str_replace('\\', '/', $relative);
+        $this->stub_directory = $path;
     }
 
     /**
@@ -74,25 +57,31 @@ abstract class GeneratorCommand extends Command
      *
      * @return void
      */
-    public function fire()
+    public function handle()
     {
-        $generator = FileGenerator::make($this->getOutputDirectory(), $this->getStubDirectory());
+        $generator = FileGenerator::make($this->getRootDirectory(), $this->getStubDirectory());
 
-        $classname = $this->convertToFullQualifyClassName($this->getNameInput());
-
-        if ($this->generator($generator, $classname) === false) {
+        if ($this->generate($generator) === false) {
             return false;
         }
 
         $this->info($this->type.' created successfully.');
     }
 
-    abstract protected function generate(FileGenerator $generator, $name);
+    /**
+     * Generate files.
+     *
+     * @param Jumilla\Generators\FileGenerator $generator
+     *
+     * @return string
+     */
+    abstract protected function generate(FileGenerator $generator);
 
     /**
      * Parse the name and format according to the default namespace.
      *
-     * @param  string  $name
+     * @param string $name
+     *
      * @return string
      */
     protected function convertToFullQualifyClassName($name)
@@ -108,6 +97,86 @@ abstract class GeneratorCommand extends Command
             $name = $this->getDefaultNamespace().'\\'.$name;
         }
 
-        return $name;
+        return $this->filterFullQualifyClassName($name, function ($part) {
+            return ucfirst($part);
+        });
     }
+
+    /**
+     * Filter FQCN.
+     *
+     * @param string   $fqcn
+     * @param callable $callback
+     *
+     * @return string
+     */
+    protected function filterFullQualifyClassName($fqcn, callable $callback)
+    {
+        $parts = explode('\\', $fqcn);
+
+        foreach ($parts as &$part) {
+            $part = call_user_func($callback, $part);
+        }
+
+        return implode('\\', $parts);
+    }
+
+    /**
+     * Split FQCN to namespace & classname.
+     *
+     * @param string $fqcn
+     *
+     * @return string
+     */
+    protected function splitFullQualifyClassName($fqcn)
+    {
+        $parts = explode('\\', $fqcn);
+        $classname = array_pop($parts);
+        return [implode('\\', $parts), $classname];
+    }
+
+    /**
+     * Get the root namespace.
+     *
+     * @return $string
+     */
+    protected function getRootNamespace()
+    {
+        return trim($this->laravel->getNamespace(), '\\');
+    }
+
+    /**
+     * Get the default namespace for the class.
+     *
+     * @return $string
+     */
+    protected function getDefaultNamespace()
+    {
+        return $this->getRootNamespace();
+    }
+
+    /**
+     * Get the directory path for root namespace.
+     *
+     * @return string
+     */
+    protected function getRootDirectory()
+    {
+        return $this->laravel['path'];
+    }
+
+    /**
+     * Get relative path for FQCN.
+     *
+     * @param string $fqcn
+     *
+     * @return string
+     */
+    protected function getRelativePath($fqcn)
+    {
+        $relative = substr($fqcn, strlen($this->getRootNamespace()) + 1);
+
+        return str_replace('\\', '/', $relative);
+    }
+
 }
