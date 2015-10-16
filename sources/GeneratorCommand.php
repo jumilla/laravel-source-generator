@@ -174,7 +174,12 @@ abstract class GeneratorCommand extends Command
      */
     protected function getRelativePath($fqcn)
     {
-        $relative = substr($fqcn, strlen($this->getRootNamespace()) + 1);
+        if (strpos($fqcn, $this->getRootNamespace().'\\') === 0) {
+            $relative = substr($fqcn, strlen($this->getRootNamespace()) + 1);
+        }
+        else {
+            $relative = $fqcn;
+        }
 
         return str_replace('\\', '/', $relative);
     }
