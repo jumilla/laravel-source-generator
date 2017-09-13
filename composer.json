@@ -12,13 +12,13 @@
 		}
 	],
 	"require": {
-        "php": ">=5.5.9",
-		"illuminate/console": "^5.2",
-		"illuminate/support": "^5.2",
+        "php": "^7.0",
+		"illuminate/console": "^5.5",
+		"illuminate/support": "^5.5",
 		"jumilla/source-generator": "^1.0"
 	},
     "require-dev": {
-        "phpunit/phpunit": "~4.0|~5.0",
+        "phpunit/phpunit": "~6.0",
         "mockery/mockery": "~0.9"
     },
 	"autoload": {
